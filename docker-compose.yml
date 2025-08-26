@@ -1,0 +1,32 @@
+version: '3.9'
+services:
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_USER: postgres
+      POSTGRES_DB: medi_bridge
+    ports: ["5432:5432"]
+    volumes: ["dbdata:/var/lib/postgresql/data", "./db/sql:/docker-entrypoint-initdb.d"]
+  keycloak:
+    image: quay.io/keycloak/keycloak:24.0.2
+    environment:
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+    command: start-dev
+    ports: ["8080:8080"]
+  gateway:
+    build: ./gateway
+    ports: ["9443:9443"]
+    depends_on: [consent, prd, assist]
+  consent:
+    build: ./consent-service
+    ports: ["9080:9080"]
+  prd:
+    build: ./prd-service
+    ports: ["9082:9082"]
+  assist:
+    build: ./assist-service
+    ports: ["9083:9083"]
+volumes:
+  dbdata: {}
