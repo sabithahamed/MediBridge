@@ -8,7 +8,7 @@ type SymptomPayload record {|
     "mild"|"moderate"|"severe" severity;
     string description;
     string startAt;
-    string endAt = "";
+    string? endAt = ();
 |};
 
 // Define AdherencePayload record for POST /adherence
@@ -36,8 +36,9 @@ service / on l {
         if !isValidDateTime(payload.startAt) {
             return <http:BadRequest>{ body: { "error": "Invalid startAt format, expected ISO 8601 (e.g., 2025-08-29T10:00:00Z)" } };
         }
-        if payload.endAt is string {
-            string endAt = payload.endAt;
+        // Validate endAt if provided and non-empty
+        string? endAt = payload.endAt;
+        if endAt is string && endAt.trim() != "" {
             if !isValidDateTime(endAt) {
                 return <http:BadRequest>{ body: { "error": "Invalid endAt format, expected ISO 8601 (e.g., 2025-08-29T10:00:00Z)" } };
             }
