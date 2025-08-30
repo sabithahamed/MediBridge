@@ -1,5 +1,5 @@
 import ballerina/http;
-import ballerina/io; // Check
+import ballerina/io; // Check 2
 
 // Define the structure for incoming symptom data.
 // This matches the OpenAPI contract. Ballerina will automatically
