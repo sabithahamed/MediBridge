@@ -1,65 +1,73 @@
 import ballerina/http;
-import ballerina/io; // Check 2
+import ballerina/io;
+import ballerina/lang.regexp;
 
-// Define the structure for incoming symptom data.
-// This matches the OpenAPI contract. Ballerina will automatically
-// validate the incoming JSON against this structure.
+// Define SymptomPayload record for POST /symptoms/{patientId}
 type SymptomPayload record {|
     string 'type;
     "mild"|"moderate"|"severe" severity;
     string description;
     string startAt;
-    // By providing a default value of '()', the field becomes truly optional.
-    // The JSON payload does not need to contain the 'endAt' key.
-    string? endAt = (); 
+    string endAt = "";
 |};
 
-// Define the structure for incoming adherence data.
+// Define AdherencePayload record for POST /adherence
 type AdherencePayload record {|
     string planId;
     string at;
     "taken"|"missed" status;
 |};
 
-// Create an HTTP server (listener) that will run on port 9082.
 listener http:Listener l = new (9082);
 
-// Define a service that attaches to the listener. All requests to
-// port 9082 will be handled by this service.
 service / on l {
-
-    // This resource function handles POST requests to /symptoms/{patientId}
-    // Example: POST /symptoms/p123
-    resource function post symptoms/[string patientId](@http:Payload SymptomPayload payload) returns json|error {
-        
-        // At this point, Ballerina has already validated that the 'payload'
-        // matches the SymptomPayload structure. If not, it would have
-        // automatically sent back a 400 Bad Request error.
-
-        // For now, we just print the received data to the console to confirm it works.
+    // Handle POST /symptoms/{patientId}
+    resource function post symptoms/[string patientId](@http:Payload SymptomPayload payload) returns json|http:BadRequest {
+        // Log the received payload
         io:println("Received Symptom for patient ", patientId, ": ", payload.toJsonString());
 
-        // In the future, this is where we will add the logic to:
-        // 1. Map this payload to a FHIR Observation.
-        // 2. Persist it to the database.
-        // 3. Emit an event to notify the doctor.
+        // Additional validation (beyond type checking)
+        if payload.'type.trim() == "" {
+            return <http:BadRequest>{ body: { "error": "Type cannot be empty" } };
+        }
+        if payload.description.trim() == "" {
+            return <http:BadRequest>{ body: { "error": "Description cannot be empty" } };
+        }
+        if !isValidDateTime(payload.startAt) {
+            return <http:BadRequest>{ body: { "error": "Invalid startAt format, expected ISO 8601 (e.g., 2025-08-29T10:00:00Z)" } };
+        }
+        if payload.endAt is string {
+            string endAt = payload.endAt;
+            if !isValidDateTime(endAt) {
+                return <http:BadRequest>{ body: { "error": "Invalid endAt format, expected ISO 8601 (e.g., 2025-08-29T10:00:00Z)" } };
+            }
+        }
 
-        // We return a success response.
-        return { ok: true, observationId: "obs-" + patientId + "-001" };
+        // Stub response (persistence will be added in Step 3)
+        return { "ok": true, "observationId": "obs-" + patientId + "-001" };
     }
 
-    // This resource function handles POST requests to /adherence
-    // The plan shows the patientId in the JWT, not the path, so we'll adjust later if needed.
-    resource function post adherence(@http:Payload AdherencePayload payload) returns json|error {
-
-        // Ballerina has automatically validated the payload against the AdherencePayload structure.
-
+    // Handle POST /adherence
+    resource function post adherence(@http:Payload AdherencePayload payload) returns json|http:BadRequest {
+        // Log the received payload
         io:println("Received Adherence log: ", payload.toJsonString());
 
-        // Future logic:
-        // 1. Persist this adherence log to the database.
-        // 2. Recalculate the patient's adherence percentage.
-        
-        return { ok: true };
+        // Additional validation
+        if payload.planId.trim() == "" {
+            return <http:BadRequest>{ body: { "error": "planId cannot be empty" } };
+        }
+        if !isValidDateTime(payload.at) {
+            return <http:BadRequest>{ body: { "error": "Invalid at format, expected ISO 8601 (e.g., 2025-08-29T10:00:00Z)" } };
+        }
+
+        // Stub response (persistence will be added in Step 3)
+        return { "ok": true };
     }
+}
+
+// Helper function to validate ISO 8601 date-time format
+function isValidDateTime(string dt) returns boolean {
+    // Basic ISO 8601 check (e.g., 2025-08-29T10:00:00Z)
+    regexp:RegExp r = re `^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})$`;
+    return dt.matches(r);
 }
