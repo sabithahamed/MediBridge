@@ -1,54 +1,41 @@
-import { useState } from 'react'
-import Navbar from '../components/Navbar'
-import Card from '../components/Card'
-import Table from '../components/Table'
-import axios from 'axios'
-import { useAlert } from '../components/Alert'
-import { dummyMedications } from '../data/dummyData'
+// src/pages/MedicationTracker.jsx
+import { useState } from "react";
+import Card from "../components/Card";
 
-function MedicationTracker() {
-  const { showAlert } = useAlert()
-  const [medications, setMedications] = useState(dummyMedications)
+export default function MedicationTracker() {
+  const [meds, setMeds] = useState([
+    { id: 1, name: "Paracetamol", status: "taken" },
+    { id: 2, name: "Aspirin", status: "missed" },
+  ]);
 
-  const toggleStatus = async (id, status) => {
-    try {
-      // Stub API call
-      await axios.patch(`/api/medications/${id}`, { status: status === 'Taken' ? 'Missed' : 'Taken' })
-      setMedications(medications.map(m => m.id === id ? { ...m, status: status === 'Taken' ? 'Missed' : 'Taken' } : m))
-      showAlert('Medication status updated', 'success')
-    } catch (error) {
-      showAlert('Failed to update status: Unauthorized', 'error')
-    }
-  }
+  const toggleStatus = (id) => {
+    setMeds(
+      meds.map((m) =>
+        m.id === id ? { ...m, status: m.status === "taken" ? "missed" : "taken" } : m
+      )
+    );
+  };
 
   return (
-    <div className="flex min-h-screen">
-      <div className="flex-1">
-        <Navbar />
-        <div className="container mx-auto p-4">
-          <h1 className="text-2xl font-bold mb-4">Medication Tracker</h1>
-          <Card title="Medication Plans">
-            <Table
-              headers={['Medication', 'Time', 'Status', 'Action']}
-              data={medications.map(m => ({
-                Medication: m.name,
-                Time: m.time,
-                Status: m.status,
-                Action: (
-                  <button
-                    onClick={() => toggleStatus(m.id, m.status)}
-                    className={`px-2 py-1 rounded ${m.status === 'Taken' ? 'bg-red-500' : 'bg-green-500'} text-white`}
-                  >
-                    Toggle {m.status === 'Taken' ? 'Missed' : 'Taken'}
-                  </button>
-                ),
-              }))}
-            />
-          </Card>
-        </div>
+    <Card title="Medication Tracker">
+      <div className="space-y-4">
+        {meds.map((m) => (
+          <div key={m.id} className="flex justify-between items-center p-4 rounded-xl shadow-sm border border-gray-200">
+            <span className="font-semibold text-gray-800 flex items-center gap-4">
+              <i className="fa-solid fa-pills text-blue-500 text-xl"></i>
+              {m.name}
+            </span>
+            <button
+              onClick={() => toggleStatus(m.id)}
+              className={`px-6 py-2 rounded-full font-bold text-sm text-white transition-colors duration-200 ${
+                m.status === "taken" ? "bg-green-500 hover:bg-green-600" : "bg-red-500 hover:bg-red-600"
+              }`}
+            >
+              {m.status.charAt(0).toUpperCase() + m.status.slice(1)}
+            </button>
+          </div>
+        ))}
       </div>
-    </div>
-  )
+    </Card>
+  );
 }
-
-export default MedicationTracker

@@ -1,29 +1,25 @@
-import Navbar from '../components/Navbar'
-import Card from '../components/Card'
-import Table from '../components/Table'
-import { dummyAuditLogs } from '../data/dummyData'
+// src/pages/SharingAudit.jsx
+import Card from "../components/Card";
 
-function SharingAudit() {
+export default function SharingAudit() {
   return (
-    <div className="flex min-h-screen">
-      <div className="flex-1">
-        <Navbar />
-        <div className="container mx-auto p-4">
-          <h1 className="text-2xl font-bold mb-4">Sharing & Audit</h1>
-          <Card title="Data Access Logs">
-            <Table
-              headers={['Doctor', 'Date', 'Purpose']}
-              data={dummyAuditLogs.map(log => ({
-                Doctor: log.doctor,
-                Date: log.date,
-                Purpose: log.purpose,
-              }))}
-            />
-          </Card>
-        </div>
-      </div>
-    </div>
-  )
+    <Card title="Sharing & Audit">
+      <ul className="space-y-6 text-gray-700">
+        <li className="flex items-start gap-4 p-4 bg-gray-50 rounded-lg">
+          <i className="fa-solid fa-user-doctor text-blue-500 text-2xl"></i>
+          <div>
+            <p className="font-semibold text-gray-800">Data Access Log</p>
+            <p className="text-sm mt-1">Dr. Smith accessed your data on <strong className="text-gray-900">August 20, 2025</strong>.</p>
+          </div>
+        </li>
+        <li className="flex items-start gap-4 p-4 bg-gray-50 rounded-lg">
+          <i className="fa-solid fa-user-doctor text-blue-500 text-2xl"></i>
+          <div>
+            <p className="font-semibold text-gray-800">Symptom View Log</p>
+            <p className="text-sm mt-1">Dr. Jane viewed your symptoms on <strong className="text-gray-900">August 25, 2025</strong>.</p>
+          </div>
+        </li>
+      </ul>
+    </Card>
+  );
 }
-
-export default SharingAudit
