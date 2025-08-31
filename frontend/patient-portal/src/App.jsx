@@ -9,6 +9,11 @@ import MedicationTracker from "./pages/MedicationTracker";
 import SharingAudit from "./pages/SharingAudit";
 import Sidebar from "./components/Sidebar";
 import ForgotPassword from "./pages/ForgotPassword";
+import Prescriptions from "./pages/Prescriptions";
+import LabReports from "./pages/LabReports";
+import EmergencyAccessNotification from "./pages/EmergencyAccessNotification";
+import ConsentPermissions from "./pages/ConsentPermissions";
+import SharingPreferences from "./pages/SharingPreferences";
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(
@@ -48,6 +53,12 @@ function App() {
                   <Route path="/mydata" element={<MyData />} />
                   <Route path="/report-symptoms" element={<ReportSymptoms />} />
                   <Route path="/medication" element={<MedicationTracker />} />
+                  <Route path="/sharing" element={<SharingAudit />} />
+                  <Route path="/prescriptions" element={<Prescriptions />} />
+                  <Route path="/labreports" element={<LabReports />} />
+                  <Route path="/emergency" element={<EmergencyAccessNotification />} />
+                  <Route path="/consent" element={<ConsentPermissions />} />
+                  <Route path="/preferences" element={<SharingPreferences />} />
                   <Route path="/sharing" element={<SharingAudit />} />
                   <Route path="*" element={<Navigate to="/dashboard" replace />} />
                 </Routes>

@@ -73,7 +73,7 @@ export default function ReportSymptoms() {
 
         <button
           onClick={handleSubmit}
-          className="w-full bg-blue-600 text-white font-semibold py-4 rounded-xl hover:bg-blue-700 transition-colors shadow-lg"
+          className="w-full bg-blue-600 text-white font-semibold py-4 rounded-xl hover:bg-blue-700 transition-colors shadow-lg cursor-pointer"
         >
           <i className="fa-solid fa-paper-plane mr-2"></i> Submit Report
         </button>

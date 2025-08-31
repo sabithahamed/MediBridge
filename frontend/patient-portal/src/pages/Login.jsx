@@ -23,11 +23,14 @@ export default function Login({ setIsAuthenticated }) {
   };
 
   const handleLogin = () => {
+    if (!email || !password) {
+      alert("Please enter both email and password.");
+      return;
+    }
     if (emailError) {
       alert("Please fix the email format before logging in.");
       return;
     }
-    
     localStorage.setItem("auth", "true");
     setIsAuthenticated(true); // notify App.jsx
     navigate("/dashboard");

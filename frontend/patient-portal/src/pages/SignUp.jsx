@@ -106,13 +106,12 @@ export default function SignUp() {
 
         <button
           onClick={handleSignUp}
-          className="w-full py-3 mt-6 bg-white/40 rounded-xl font-bold text-gray-800 shadow-md hover:bg-white/50 active:scale-95 transition-all duration-300"
+          className="w-full py-3 mt-6 bg-white/40 rounded-xl font-bold text-gray-800 shadow-md hover:bg-white/50 active:scale-95 transition-all duration-300 cursor-pointer"
         >
           Sign Up
         </button>
-
         <p className="text-center text-xs mt-6 text-gray-800">
-          Already have an account? <Link to="/" className="font-semibold hover:text-blue-700 transition-colors duration-300">Log in</Link>
+          Already have an account? <Link to="/" className="font-semibold hover:text-blue-700 transition-colors duration-300">Login</Link>
         </p>
       </div>
     </div>

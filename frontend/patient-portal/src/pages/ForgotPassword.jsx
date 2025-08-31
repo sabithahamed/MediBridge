@@ -108,13 +108,12 @@ export default function ForgotPassword() {
 
         <button
           onClick={handlePasswordReset}
-          className="w-full py-3 mt-6 bg-white/40 rounded-xl font-bold text-gray-800 shadow-md hover:bg-white/50 active:scale-95 transition-all duration-300"
+          className="w-full py-3 mt-6 bg-white/40 rounded-xl font-bold text-gray-800 shadow-md hover:bg-white/50 active:scale-95 transition-all duration-300 cursor-pointer"
         >
           Reset Password
         </button>
-
         <p className="text-center text-xs mt-6 text-gray-800">
-          Remembered your password? <Link to="/" className="font-semibold hover:text-blue-700 transition-colors duration-300">Log in</Link>
+          Remembered your password? <Link to="/" className="font-semibold hover:text-blue-700 transition-colors duration-300">Login</Link>
         </p>
       </div>
     </div>
