@@ -1,6 +1,9 @@
 import ballerina/http;
 import ballerina/io;
 import ballerina/lang.regexp;
+import ballerinax/postgresql;
+import ballerina/uuid;
+import ballerina/sql;
 
 // Define SymptomPayload record for POST /symptoms/{patientId}
 type SymptomPayload record {|
@@ -24,13 +27,24 @@ type SymptomCode record {|
     string display;
 |};
 
+// Initialize PostgreSQL client in an isolated function
+isolated function initDbClient() returns postgresql:Client|error {
+    return new (host = "localhost",
+                username = "postgres",
+                password = "postgres",
+                database = "medi_bridge",
+                port = 5432);
+}
+
+// Global final client
+final postgresql:Client dbClient = check initDbClient();
 
 listener http:Listener l = new (9082);
 
 service / on l {
     // Handle POST /symptoms/{patientId}
-    isolated resource function post symptoms/[string patientId](@http:Payload SymptomPayload payload) returns json|http:BadRequest {
-
+    // Handle POST /symptoms/{patientId}
+    isolated resource function post symptoms/[string patientId](@http:Payload SymptomPayload payload) returns json|http:BadRequest|http:InternalServerError|error {
         // Simple SNOMED CT mapping for symptom types (extend as needed)
         final map<SymptomCode> SYMPTOM_CODES = {
             "fever": {code: "386661006", display: "Fever"},
@@ -52,9 +66,11 @@ service / on l {
         if !isValidDateTime(payload.startAt) {
             return <http:BadRequest>{ body: { "error": "Invalid startAt format, expected ISO 8601 (e.g., 2025-08-29T10:00:00Z)" } };
         }
-        // Validate endAt if provided and non-empty
         string? endAt = payload.endAt;
-        if endAt is string && endAt.trim() != "" {
+        if endAt is string {
+            if endAt.trim() == "" {
+                return <http:BadRequest>{ body: { "error": "endAt cannot be empty if provided" } };
+            }
             if !isValidDateTime(endAt) {
                 return <http:BadRequest>{ body: { "error": "Invalid endAt format, expected ISO 8601 (e.g., 2025-08-29T10:00:00Z)" } };
             }
@@ -96,16 +112,11 @@ service / on l {
                 }
             ]
         };
-        if payload.endAt is string {
-            // string? endAt = payload.endAt;
-            if endAt is string && endAt.trim() != "" {
-                fhirObs["effectivePeriod"] = {
-                    "start": payload.startAt,
-                    "end": endAt
-                };
-            } else {
-                fhirObs["effectiveDateTime"] = payload.startAt;
-            }
+        if endAt is string && endAt.trim() != "" {
+            fhirObs["effectivePeriod"] = {
+                "start": payload.startAt,
+                "end": endAt
+            };
         } else {
             fhirObs["effectiveDateTime"] = payload.startAt;
         }
@@ -113,12 +124,41 @@ service / on l {
         // Log FHIR Observation
         io:println("Mapped FHIR Observation: ", fhirObs.toJsonString());
 
-        // Stub response (persistence will be added in Step 4)
-        return { "ok": true, "observationId": "obs-" + patientId + "-001" };
+        do {
+            // Check if patient exists in patients table
+            sql:ParameterizedQuery checkQuery = `SELECT COUNT(*) FROM patients WHERE patient_id = ${patientId}`;
+            int count = check dbClient->queryRow(checkQuery);
+
+            // If patient does not exist, insert minimal record
+            if count == 0 {
+                sql:ParameterizedQuery insertPatientQuery = `INSERT INTO patients (patient_id, created_at) VALUES (${patientId}, CURRENT_TIMESTAMP)`;
+                _ = check dbClient->execute(insertPatientQuery);
+                io:println("Inserted minimal patient record for patientId: ", patientId);
+            }
+
+            // Generate unique obs_id
+            string obsId = "obs-" + patientId + "-" + uuid:createType4AsString().substring(0, 8);
+
+            // Insert into observations table
+            sql:ParameterizedQuery insertQuery = `INSERT INTO observations (obs_id, patient_id, type, severity, description, start_at, end_at)
+                                                VALUES (${obsId}, ${patientId}, ${payload.'type}, ${payload.severity}, ${payload.description}, ${payload.startAt}::TIMESTAMP, ${payload.endAt}::TIMESTAMP)`;
+            _ = check dbClient->execute(insertQuery);
+
+            // Return success with generated obs_id
+            return { "ok": true, "observationId": obsId };
+        } on fail error e {
+            // Handle SQL errors, e.g., foreign key violations
+            if e is sql:DatabaseError && e.message().includes("foreign key") {
+                return <http:BadRequest>{ body: { "error": "Patient ID does not exist" } };
+            }
+            // Log other errors and return generic error
+            io:println("Database error: ", e.message());
+            return <http:InternalServerError>{ body: { "error": "Failed to process symptom: " + e.message() } };
+        }
     }
 
     // Handle POST /adherence
-    isolated resource function post adherence(@http:Payload AdherencePayload payload) returns json|http:BadRequest {
+    isolated resource function post adherence(@http:Payload AdherencePayload payload) returns json|http:BadRequest|http:InternalServerError|error {
         // Log the received payload
         io:println("Received Adherence log: ", payload.toJsonString());
 
@@ -130,14 +170,45 @@ service / on l {
             return <http:BadRequest>{ body: { "error": "Invalid at format, expected ISO 8601 (e.g., 2025-08-29T10:00:00Z)" } };
         }
 
-        // Stub response (persistence will be added in Step 4)
-        return { "ok": true };
+        do {
+            // Check if planId exists in medication_plans table
+            sql:ParameterizedQuery checkQuery = `SELECT COUNT(*) FROM medication_plans WHERE plan_id = ${payload.planId}`;
+            int count = check dbClient->queryRow(checkQuery);
+
+            // If planId does not exist, log a warning and proceed
+            if count == 0 {
+                io:println("Warning: planId ", payload.planId, " not found in medication_plans. Proceeding with adherence log.");
+                // Optional: Insert stub plan with only plan_id (adjust based on actual schema)
+                sql:ParameterizedQuery insertPlanQuery = `INSERT INTO medication_plans (plan_id) VALUES (${payload.planId})`;
+                _ = check dbClient->execute(insertPlanQuery);
+                io:println("Inserted stub medication plan for planId: ", payload.planId);
+            }
+
+            // Insert into adherence_logs table
+            sql:ParameterizedQuery insertQuery = `INSERT INTO adherence_logs (plan_id, at, status)
+                                                VALUES (${payload.planId}, ${payload.at}::TIMESTAMP, ${payload.status})`;
+            sql:ExecutionResult result = check dbClient->execute(insertQuery);
+
+            // Retrieve last insert ID (BIGSERIAL log_id) and cast to int or string
+            anydata logId = result.lastInsertId;
+            string|int jsonLogId = logId is int ? logId : logId.toString();
+
+            // Return success with generated log_id
+            return { "ok": true, "logId": jsonLogId };
+        } on fail error e {
+            // Handle SQL errors, e.g., foreign key violations
+            if e is sql:DatabaseError && e.message().includes("foreign key") {
+                return <http:BadRequest>{ body: { "error": "Medication plan ID does not exist" } };
+            }
+            // Log other errors and return generic error
+            io:println("Database error: ", e.message());
+            return <http:InternalServerError>{ body: { "error": "Failed to process adherence log: " + e.message() } };
+        }
     }
 }
 
 // Helper function to validate ISO 8601 date-time format
 isolated function isValidDateTime(string dt) returns boolean {
-    // Basic ISO 8601 check (e.g., 2025-08-29T10:00:00Z)
-    regexp:RegExp r = re `^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})$`;
+    regexp:RegExp r = re `^\d{4}-(?:0[1-9]|1[0-2])-(?:0[1-9]|[12]\d|3[01])T(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d{1,6})?(?:Z|[+-](?:0\d|1[0-2]):[0-5]\d)$`;
     return dt.matches(r);
 }
