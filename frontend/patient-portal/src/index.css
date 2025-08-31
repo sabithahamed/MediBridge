@@ -1,0 +1,12 @@
+@import "tailwindcss";
+
+/* Add this to your src/index.css file */
+
+.tour-highlight {
+  position: relative;
+  z-index: 51;
+  box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.7);
+  border: 2px solid #3b82f6; /* A clear blue border */
+  border-radius: 0.5rem;
+  transition: all 0.3s ease-in-out;
+}

@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import Card from "../components/Card";
 import { patients, notifications } from "../data/mockData";
@@ -101,6 +102,7 @@ export default function Dashboard() {
             </div>
           </Card>
         </div>
+
       </div>
     </div>
   );

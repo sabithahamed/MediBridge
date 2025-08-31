@@ -89,6 +89,7 @@ export default function EmergencyAccess() {
           onClick={handleRequestAccess}
           disabled={!selectedPatient || !reason}
           className="w-full py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center text-lg"
+
         >
           <i className="fa-solid fa-triangle-exclamation mr-2"></i>
           Request Emergency Access

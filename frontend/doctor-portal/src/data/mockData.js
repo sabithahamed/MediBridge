@@ -16,6 +16,7 @@ export const patients = [
       temperature: "37.5°C",
       oxygenSaturation: "98%"
     }
+
   },
   { 
     id: "2", 
@@ -34,6 +35,7 @@ export const patients = [
       temperature: "37.1°C",
       oxygenSaturation: "99%"
     }
+
   },
   { 
     id: "3", 
@@ -56,10 +58,12 @@ export const patients = [
 ];
 
 export const notifications = [
+
   { id: 1, type: 'symptom', message: "New symptom reported by John Doe: Headache and fever", date: "2025-08-30", read: false },
   { id: 2, type: 'emergency', message: "Emergency access to Jane Smith's record by Dr. Evans", date: "2025-08-29", read: true },
   { id: 3, type: 'lab', message: "Lab results are available for Jane Smith's recent test", date: "2025-08-28", read: false },
   { id: 4, type: 'medication', message: "Robert Johnson missed a scheduled medication: Atorvastatin 40mg", date: "2025-08-28", read: false },
   { id: 5, type: 'appointment', message: "Appointment reminder: John Doe in 1 hour", date: "2025-08-30", read: true },
   { id: 6, type: 'symptom', message: "High severity symptom 'Chest pain' reported by Robert Johnson", date: "2025-08-28", read: false },
+
 ];

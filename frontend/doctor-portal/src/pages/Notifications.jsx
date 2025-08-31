@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { notifications as mockNotifications } from "../data/mockData";
 import NotificationModal from "../components/NotificationModal";
