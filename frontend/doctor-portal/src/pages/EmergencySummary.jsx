@@ -1,11 +1,20 @@
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import Card from "../components/Card";
 import { patients } from "../data/mockData";
 
 export default function EmergencySummary() {
   const { patientId } = useParams();
   const navigate = useNavigate();
-  const patient = patients.find((p) => p.id === patientId);
+  const location = useLocation();
+  const params = new URLSearchParams(location.search);
+  const nic = params.get('nic');
+  let patient = patients.find((p) => p.id === patientId);
+  if(!patient && nic){
+    const stored = localStorage.getItem('ephemeral_'+nic);
+    if(stored){
+      patient = JSON.parse(stored);
+    }
+  }
 
   if (!patient) return <p className="text-red-500">Patient not found</p>;
 
@@ -31,11 +40,12 @@ export default function EmergencySummary() {
 
       {/* Limited Data Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
-        <Card title="Critical Information" className="border-red-500 border-2">
+    <Card title="Critical Information" className="border-red-500 border-2">
           <div className="space-y-3 text-lg">
             <p><strong>Name:</strong> {patient.name}</p>
             <p><strong>Age:</strong> {patient.age}</p>
             <p><strong>Gender:</strong> {patient.gender}</p>
+      {patient.nic && <p><strong>NIC:</strong> {patient.nic}</p>}
           </div>
         </Card>
         
@@ -50,8 +60,8 @@ export default function EmergencySummary() {
         </Card>
         
         <Card title="Current Medications" className="md:col-span-2 border-red-500 border-2">
-           <ul className="list-disc list-inside space-y-2 text-lg">
-            {patient.medications.map((med, index) => (
+          <ul className="list-disc list-inside space-y-2 text-lg">
+            {(patient.medications||['Unknown']).map((med, index) => (
               <li key={index}>{med}</li>
             ))}
           </ul>

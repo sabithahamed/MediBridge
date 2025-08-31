@@ -10,7 +10,6 @@ export default function Layout({ children }) {
     // MODIFIED LINE BELOW
     { path: "/doctor/patients", name: "Patients", icon: "fa-users" },
     { path: "/doctor/notifications", name: "Notifications", icon: "fa-bell" },
-        { path: "/doctor/assist", name: "AI Assist", icon: "fa-robot" }, // <-- ADD THIS LINE
     { path: "/doctor/emergency", name: "Emergency Access", icon: "fa-user-secret" },
   ];
 

@@ -4,11 +4,11 @@ import { patients as mockPatients } from "../data/mockData";
 import AddPatientModal from "../components/AddPatientModal";
 import SuccessDialog from "../components/SuccessDialog";
 
-// Add a 'status' to our mock data for the demo
-const patientsWithStatus = mockPatients.map((p, index) => ({
+// Derive status from sharingAllowed and include adherence & severity
+const patientsWithStatus = mockPatients.map((p) => ({
   ...p,
-  status: index % 2 === 0 ? "Active" : "Pending Approval",
-  lastActivity: `Symptom reported: ${p.latestSymptom.date}`
+  status: p.sharingAllowed ? "Active" : "Pending Approval",
+  lastActivity: `${p.latestSymptom.severity?.toUpperCase() || ''} symptom on ${p.latestSymptom.date}`
 }));
 
 export default function Patients() {
@@ -83,6 +83,7 @@ export default function Patients() {
                       <div className="ml-4">
                         <div className="text-sm font-medium text-gray-900">{patient.name}</div>
                         <div className="text-sm text-gray-500">{patient.age} years, {patient.gender}</div>
+                        <div className="text-xs text-gray-400">Adherence: {patient.adherence}%</div>
                       </div>
                     </div>
                   </td>

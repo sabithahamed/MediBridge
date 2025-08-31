@@ -1,18 +1,23 @@
 // src/pages/ReportSymptoms.jsx
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Card from "../components/Card";
 
 export default function ReportSymptoms() {
-  const [form, setForm] = useState({
-    type: "",
-    severity: "",
-    description: "",
-    startAt: "",
-    endAt: "",
-  });
+  const [form, setForm] = useState({ type: "", severity: "", description: "", startAt: "", endAt: "" });
+  const [history, setHistory] = useState([]);
+
+  useEffect(()=>{
+    const saved = localStorage.getItem('symptomHistory');
+    if(saved) setHistory(JSON.parse(saved));
+  },[]);
 
   const handleSubmit = () => {
-    alert("Symptoms reported: " + JSON.stringify(form, null, 2));
+    if(!form.type || !form.severity) return alert('Type & Severity required');
+    const entry = { id: Date.now(), ...form, reportedAt: new Date().toISOString().slice(0,10) };
+    const updated = [entry, ...history].slice(0,50);
+    setHistory(updated);
+    localStorage.setItem('symptomHistory', JSON.stringify(updated));
+    setForm({ type:'', severity:'', description:'', startAt:'', endAt:'' });
   };
 
   return (
@@ -71,12 +76,22 @@ export default function ReportSymptoms() {
           </div>
         </div>
 
-        <button
-          onClick={handleSubmit}
-          className="w-full bg-blue-600 text-white font-semibold py-4 rounded-xl hover:bg-blue-700 transition-colors shadow-lg"
-        >
+        <button onClick={handleSubmit} className="w-full bg-blue-600 text-white font-semibold py-4 rounded-xl hover:bg-blue-700 transition-colors shadow-lg">
           <i className="fa-solid fa-paper-plane mr-2"></i> Submit Report
         </button>
+        <div className="pt-4 border-t">
+          <h3 className="font-semibold text-gray-800 mb-3 flex items-center gap-2"><i className="fa-solid fa-clock-rotate-left text-blue-500"></i> History</h3>
+          <div className="max-h-64 overflow-auto space-y-2 pr-1">
+            {history.length===0 && <p className="text-sm text-gray-500">No symptoms reported yet.</p>}
+            {history.map(h => (
+              <div key={h.id} className="p-3 bg-gray-50 rounded-lg border">
+                <p className="text-sm font-semibold text-gray-800">{h.type} <span className="text-xs text-gray-500">({h.severity})</span></p>
+                <p className="text-xs text-gray-500">Reported {h.reportedAt} | Start {h.startAt || '—'} {h.endAt && `End ${h.endAt}`}</p>
+                {h.description && <p className="text-xs mt-1 text-gray-600 whitespace-pre-line">{h.description}</p>}
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
     </Card>
   );
