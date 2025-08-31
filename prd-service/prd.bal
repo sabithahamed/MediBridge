@@ -80,6 +80,9 @@ service / on l {
         if !isValidDateTime(payload.startAt) {
             return <http:BadRequest>{ body: { "error": "Invalid startAt format, expected ISO 8601 (e.g., 2025-08-29T10:00:00Z)" } };
         }
+        if !patientId.matches(re `^[a-zA-Z0-9]{1,50}$`) {
+            return <http:BadRequest>{ body: { "error": "Invalid patientId: must be alphanumeric, 1-50 characters" } };
+        }
         string? endAt = payload.endAt;
         if endAt is string {
             if endAt.trim() == "" {
@@ -136,7 +139,7 @@ service / on l {
         }
 
         // Log FHIR Observation
-        io:println("Mapped FHIR Observation: ", fhirObs.toJsonString());
+        io:println("Mapped FHIR Observation: ", fhirObs.toJsonString());        
 
         do {
             // Check if patient exists in patients table
@@ -152,6 +155,24 @@ service / on l {
 
             // Generate unique obs_id
             string obsId = "obs-" + patientId + "-" + uuid:createType4AsString().substring(0, 8);
+            int maxRetries = 5;
+            int retryCount = 0;
+            boolean isUnique = false;
+
+            while !isUnique && retryCount < maxRetries {
+                obsId = "obs-" + patientId + "-" + uuid:createType4AsString().substring(0, 8);
+                sql:ParameterizedQuery checkObsQuery = `SELECT COUNT(*) FROM observations WHERE obs_id = ${obsId}`;
+                int obsCount = check dbClient->queryRow(checkObsQuery);
+                if obsCount == 0 {
+                    isUnique = true;
+                } else {
+                    retryCount += 1;
+                    io:println("obs_id collision detected: ", obsId, ", retrying (", retryCount, "/", maxRetries, ")");
+                }
+            }
+            if !isUnique {
+                return <http:InternalServerError>{ body: { "error": "Failed to generate unique obs_id after " + maxRetries.toString() + " attempts" } };
+            }
 
             // Insert into observations table
             sql:ParameterizedQuery insertQuery = `INSERT INTO observations (obs_id, patient_id, type, severity, description, start_at, end_at)
@@ -259,7 +280,7 @@ isolated function isValidDateTime(string dt) returns boolean {
 isolated function getKeycloakToken() returns string|error {
     http:Client keycloakClient = check new ("http://localhost:8080"); // Adjust to your Keycloak server URL, e.g., http://keycloak:8080 in Docker
     string clientId = "medi-bridge";
-    string clientSecret = "YOUR_CLIENT_SECRET_HERE"; // Replace with actual secret from Sabith
+    string clientSecret = "YOUR_CLIENT_SECRET_HERE"; 
     string tokenEndpoint = "/auth/realms/your-realm/protocol/openid-connect/token"; // Adjust realm as per Keycloak setup
 
     map<string> payload = {
@@ -282,3 +303,4 @@ isolated function getKeycloakToken() returns string|error {
     log:printInfo("Successfully fetched Keycloak access token");
     return accessToken;
 }
+
