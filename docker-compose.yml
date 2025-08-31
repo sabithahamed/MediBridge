@@ -21,6 +21,13 @@ services:
     depends_on: [consent, prd, assist]
   consent:
     build: ./consent-service
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+      DB_NAME: medi_bridge
+    depends_on: postgres
     ports: ["9080:9080"]
   prd:
     build: ./prd-service
