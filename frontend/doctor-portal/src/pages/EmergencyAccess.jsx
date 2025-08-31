@@ -6,27 +6,49 @@ import SuccessDialog from "../components/SuccessDialog";
 
 export default function EmergencyAccess() {
   const [reason, setReason] = useState("");
-  const [selectedPatient, setSelectedPatient] = useState("");
+  const [nic, setNic] = useState("");
+  const [matched, setMatched] = useState(null);
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
   const navigate = useNavigate();
 
+  const handleLookup = () => {
+    if(!nic) return;
+    const p = patients.find(p=> p.nic?.toLowerCase() === nic.toLowerCase());
+    if(p){
+      setMatched(p);
+    } else {
+      // create ephemeral patient stub for demo
+      const stub = {
+        id: 'E'+Date.now(),
+        name: 'Unknown Patient',
+        nic,
+        age: '—',
+        gender: '—',
+        medicalHistory: ['Unknown'],
+        medications: ['Unknown'],
+      };
+      localStorage.setItem('ephemeral_'+nic, JSON.stringify(stub));
+      setMatched(stub);
+    }
+  };
+
   const handleRequestAccess = () => {
-    if (selectedPatient && reason) {
+    if (matched && reason) {
       setShowConfirmation(true);
     } else {
-      alert("Please select a patient and provide a justification.");
+      alert("Lookup patient by NIC and provide justification.");
     }
   };
 
   const confirmAccess = () => {
     // Hide confirmation and show success dialog
     setShowConfirmation(false);
-    setSuccessMessage(`Emergency access for ${patients.find(p => p.id === selectedPatient)?.name} granted. Redirecting...`);
+  setSuccessMessage(`Emergency access for ${matched.name} granted. Redirecting...`);
     
     // Simulate API call and redirect
     setTimeout(() => {
-        navigate(`/doctor/emergency/${selectedPatient}`);
+  navigate(`/doctor/emergency/${matched.id}?nic=${nic}`);
     }, 2000); // Wait 2 seconds before redirecting
   };
 
@@ -55,19 +77,14 @@ export default function EmergencyAccess() {
       </div>
       
       <Card>
-        {/* Patient Selection */}
-        <div className="mb-4">
-            <label className="font-semibold text-gray-700 mb-2 block text-lg">1. Select Patient</label>
-            <select
-              value={selectedPatient}
-              onChange={(e) => setSelectedPatient(e.target.value)}
-              className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
-            >
-              <option value="" disabled>-- Choose a patient --</option>
-              {patients.map(p => (
-                  <option key={p.id} value={p.id}>{p.name} (ID: {p.id})</option>
-              ))}
-            </select>
+        {/* NIC Lookup */}
+        <div className="mb-6">
+          <label className="font-semibold text-gray-700 mb-2 block text-lg">1. Enter Patient NIC</label>
+          <div className="flex gap-2">
+            <input value={nic} onChange={e=>setNic(e.target.value)} placeholder="e.g. 852345678V" className="flex-1 p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400" />
+            <button type="button" onClick={handleLookup} className="px-5 bg-blue-600 text-white rounded-lg font-semibold">Lookup</button>
+          </div>
+          {matched && <div className="mt-3 p-3 bg-blue-50 rounded-lg text-sm text-blue-800 flex items-center gap-2"><i className="fa-solid fa-user-shield"/> {matched.name} {matched.nic && <span className="text-xs text-blue-500">({matched.nic})</span>}</div>}
         </div>
 
         {/* Justification Input */}
@@ -87,7 +104,7 @@ export default function EmergencyAccess() {
         {/* Action Button */}
         <button
           onClick={handleRequestAccess}
-          disabled={!selectedPatient || !reason}
+          disabled={!matched || !reason}
           className="w-full py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center text-lg"
 
         >

@@ -7,6 +7,11 @@ import MyData from "./pages/MyData";
 import ReportSymptoms from "./pages/ReportSymptoms";
 import MedicationTracker from "./pages/MedicationTracker";
 import SharingAudit from "./pages/SharingAudit";
+import DataSharingPreferences from "./pages/DataSharingPreferences";
+import ManageDoctors from "./pages/ManageDoctors";
+import EmergencySettings from "./pages/EmergencySettings";
+import Prescriptions from "./pages/Prescriptions";
+import Notifications from "./pages/Notifications";
 import Sidebar from "./components/Sidebar";
 import ForgotPassword from "./pages/ForgotPassword";
 
@@ -46,8 +51,13 @@ function App() {
                 <Routes>
                   <Route path="/dashboard" element={<Dashboard />} />
                   <Route path="/mydata" element={<MyData />} />
+                  <Route path="/prescriptions" element={<Prescriptions />} />
                   <Route path="/report-symptoms" element={<ReportSymptoms />} />
                   <Route path="/medication" element={<MedicationTracker />} />
+                  <Route path="/data-preferences" element={<DataSharingPreferences />} />
+                  <Route path="/manage-doctors" element={<ManageDoctors />} />
+                  <Route path="/emergency-settings" element={<EmergencySettings />} />
+                  <Route path="/notifications" element={<Notifications />} />
                   <Route path="/sharing" element={<SharingAudit />} />
                   <Route path="*" element={<Navigate to="/dashboard" replace />} />
                 </Routes>
