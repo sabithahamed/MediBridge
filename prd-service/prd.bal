@@ -4,6 +4,7 @@ import ballerina/lang.regexp;
 import ballerinax/postgresql;
 import ballerina/uuid;
 import ballerina/sql;
+import ballerina/log;
 
 // Define SymptomPayload record for POST /symptoms/{patientId}
 type SymptomPayload record {|
@@ -12,6 +13,16 @@ type SymptomPayload record {|
     string description;
     string startAt;
     string? endAt = ();
+|};
+
+// After SymptomCode record
+type NotificationPayload record {|
+    string patientId;
+    string observationId;
+    string symptomType;
+    string severity;
+    string description;
+    string timestamp;
 |};
 
 // Define AdherencePayload record for POST /adherence
@@ -38,6 +49,7 @@ isolated function initDbClient() returns postgresql:Client|error {
 
 // Global final client
 final postgresql:Client dbClient = check initDbClient();
+final http:Client notifierClient = check new ("http://localhost:9083"); // Use http://assist:9083 in Docker
 
 listener http:Listener l = new (9082);
 
@@ -143,6 +155,23 @@ service / on l {
             sql:ParameterizedQuery insertQuery = `INSERT INTO observations (obs_id, patient_id, type, severity, description, start_at, end_at)
                                                 VALUES (${obsId}, ${patientId}, ${payload.'type}, ${payload.severity}, ${payload.description}, ${payload.startAt}::TIMESTAMP, ${payload.endAt}::TIMESTAMP)`;
             _ = check dbClient->execute(insertQuery);
+
+            // After INSERT INTO observations and before return
+            NotificationPayload notification = {
+                patientId: patientId,
+                observationId: obsId,
+                symptomType: payload.'type,
+                severity: payload.severity,
+                description: payload.description,
+                timestamp: payload.startAt
+            };
+            
+            do {
+                _ = check notifierClient->post("/notify", notification, targetType = json); // Specify response type as json
+                log:printInfo("Notification sent for observation: " + obsId);
+            } on fail var e {
+                log:printError("Failed to send notification for observation: " + obsId, e);
+            }
 
             // Return success with generated obs_id
             return { "ok": true, "observationId": obsId };
