@@ -1,49 +1,54 @@
-import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { useAlert } from '../components/Alert'
-import Form from '../components/Form'
+import { useState, useContext } from "react";
+import { useNavigate, Link } from "react-router-dom";
+import { AuthContext } from "../AuthContext";
 
-function Login() {
-  const navigate = useNavigate()
-  const { showAlert } = useAlert()
-  const [role, setRole] = useState('doctor')
+export default function Login() {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const navigate = useNavigate();
+  const { setAuth } = useContext(AuthContext);
 
-  const handleSubmit = (e) => {
-    e.preventDefault()
-    const formData = new FormData(e.target)
-    const username = formData.get('username')
-    const password = formData.get('password')
-
-    if (username === 'doctor' && password === 'password') {
-      navigate('/search-patient')
+  const handleLogin = () => {
+    if (email && password) {
+      localStorage.setItem("auth", "true");
+      setAuth(true);
+      navigate("/doctor/dashboard");
     } else {
-      showAlert('Invalid credentials', 'error')
+      alert("Enter valid credentials!");
     }
-  }
-
-  const fields = [
-    { label: 'Username', name: 'username', type: 'text', placeholder: 'Enter username' },
-    { label: 'Password', name: 'password', type: 'password', placeholder: 'Enter password' },
-  ]
+  };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <div className="bg-white p-8 rounded-lg shadow-md w-full max-w-md">
-        <h1 className="text-2xl font-bold mb-4">Doctor Portal Login</h1>
-        <div className="mb-4">
-          <label className="block text-sm font-medium">Role</label>
-          <select
-            value={role}
-            onChange={(e) => setRole(e.target.value)}
-            className="w-full p-2 border rounded"
-          >
-            <option value="doctor">Doctor</option>
-          </select>
-        </div>
-        <Form fields={fields} onSubmit={handleSubmit} buttonText="Login" />
+    <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-green-300 to-blue-500 p-4">
+      <div className="bg-white/20 backdrop-blur-lg rounded-3xl shadow-lg p-6 md:p-8 max-w-sm w-full text-gray-800">
+        <h1 className="text-3xl font-bold text-center mb-6">Doctor Portal</h1>
+        <input
+          type="text"
+          placeholder="Email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          className="w-full p-3 mb-4 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400"
+        />
+        <input
+          type="password"
+          placeholder="Password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          className="w-full p-3 mb-4 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400"
+        />
+        <button
+          onClick={handleLogin}
+          className="w-full py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors"
+        >
+          Login
+        </button>
+        <p className="text-center text-sm mt-4">
+          Forgot your password?{" "}
+          <Link to="/forgot-password" className="text-blue-600 hover:underline">
+            Reset it here
+          </Link>
+        </p>
       </div>
     </div>
-  )
+  );
 }
-
-export default Login

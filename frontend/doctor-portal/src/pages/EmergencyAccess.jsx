@@ -1,53 +1,46 @@
-import { useState } from 'react'
-import Navbar from '../components/Navbar.jsx'
-import Form from '../components/Form.jsx'
-import Modal from '../components/Modal.jsx'
-import { useAlert } from '../components/Alert.jsx'
-import axios from 'axios'
-console.log('axios:', axios)
+import { useState } from "react";
+import Card from "../components/Card";
 
-function EmergencyAccess() {
-  const [isModalOpen, setIsModalOpen] = useState(false)
-  const { showAlert } = useAlert()
-  const [loading, setLoading] = useState(false)
+export default function EmergencyAccess() {
+  const [reason, setReason] = useState("");
 
-  const fields = [
-    { label: 'Justification', name: 'justification', type: 'textarea', placeholder: 'Enter reason for emergency access' },
-  ]
-
-  const handleSubmit = async (e) => {
-    e.preventDefault()
-    setLoading(true)
-    try {
-      await axios.post('/api/emergency-access', Object.fromEntries(new FormData(e.target)))
-      setIsModalOpen(false)
-      showAlert('Emergency access granted', 'success')
-    } catch (error) {
-      showAlert('Access denied: Unauthorized', 'error')
-    } finally {
-      setLoading(false)
+  const requestAccess = () => {
+    if (reason) {
+      alert("Emergency access granted for reason: " + reason);
+      setReason("");
+    } else {
+      alert("Please provide a justification.");
     }
-  }
+  };
 
   return (
-    <div className="flex min-h-screen">
-      <div className="flex-1">
-        <Navbar />
-        <div className="container mx-auto p-4">
-          <h1 className="text-2xl font-bold mb-4">Emergency Access</h1>
-          <button
-            onClick={() => setIsModalOpen(true)}
-            className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
-          >
-            Request Emergency Access
-          </button>
-          <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Emergency Access Request">
-            <Form fields={fields} onSubmit={handleSubmit} buttonText={loading ? 'Submitting...' : 'Submit'} />
-          </Modal>
-        </div>
+    <div>
+      <div className="mb-6">
+        <h1 className="text-3xl font-bold text-gray-800">Emergency Access</h1>
+        <p className="text-gray-600">Request temporary access to patient records in emergency situations</p>
       </div>
+      
+      <Card title="Request Emergency Access">
+        <div className="mb-4">
+          <p className="text-gray-700 mb-2">
+            Please provide a detailed justification for emergency access to patient records.
+            This request will be logged and reviewed.
+          </p>
+        </div>
+        <textarea
+          placeholder="Justification for emergency access..."
+          value={reason}
+          onChange={(e) => setReason(e.target.value)}
+          className="w-full p-4 border border-gray-300 rounded-lg h-32 mb-4 focus:outline-none focus:ring-2 focus:ring-red-400"
+        />
+        <button
+          onClick={requestAccess}
+          className="w-full py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+        >
+          <i className="fa-solid fa-triangle-exclamation mr-2"></i>
+          Request Emergency Access
+        </button>
+      </Card>
     </div>
-  )
+  );
 }
-
-export default EmergencyAccess
