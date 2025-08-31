@@ -7,8 +7,10 @@ export default function Layout({ children }) {
 
   const navLinks = [
     { path: "/doctor/dashboard", name: "Dashboard", icon: "fa-tachometer-alt" },
-    { path: "/doctor/search", name: "Search Patient", icon: "fa-user-plus" },
+    // MODIFIED LINE BELOW
+    { path: "/doctor/patients", name: "Patients", icon: "fa-users" },
     { path: "/doctor/notifications", name: "Notifications", icon: "fa-bell" },
+        { path: "/doctor/assist", name: "AI Assist", icon: "fa-robot" }, // <-- ADD THIS LINE
     { path: "/doctor/emergency", name: "Emergency Access", icon: "fa-user-secret" },
   ];
 
