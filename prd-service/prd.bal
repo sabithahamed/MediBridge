@@ -50,6 +50,8 @@ isolated function initDbClient() returns postgresql:Client|error {
 // Global final client
 final postgresql:Client dbClient = check initDbClient();
 final http:Client notifierClient = check new ("http://localhost:9083"); // Use http://assist:9083 in Docker
+// FHIR Adapter client with Bearer token authentication
+final http:Client fhirClient = check new ("http://localhost:9443"); // Use http://gateway:9443 in Docker
 
 listener http:Listener l = new (9082);
 
@@ -173,6 +175,17 @@ service / on l {
                 log:printError("Failed to send notification for observation: " + obsId, e);
             }
 
+            // Send FHIR Observation to FHIR Adapter
+            do {
+                string accessToken = check getKeycloakToken();
+                http:Request fhirRequest = new;
+                fhirRequest.setJsonPayload(fhirObs);
+                _ = check fhirClient->post("/fhir/Observation", fhirRequest, headers = {"Authorization": "Bearer " + accessToken}, targetType = json);
+                log:printInfo("FHIR Observation sent for observation: " + obsId);
+            } on fail var e {
+                log:printError("Failed to send FHIR Observation for observation: " + obsId, e);
+            }
+
             // Return success with generated obs_id
             return { "ok": true, "observationId": obsId };
         } on fail error e {
@@ -240,4 +253,32 @@ service / on l {
 isolated function isValidDateTime(string dt) returns boolean {
     regexp:RegExp r = re `^\d{4}-(?:0[1-9]|1[0-2])-(?:0[1-9]|[12]\d|3[01])T(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d{1,6})?(?:Z|[+-](?:0\d|1[0-2]):[0-5]\d)$`;
     return dt.matches(r);
+}
+
+// Function to fetch Keycloak access token using client credentials
+isolated function getKeycloakToken() returns string|error {
+    http:Client keycloakClient = check new ("http://localhost:8080"); // Adjust to your Keycloak server URL, e.g., http://keycloak:8080 in Docker
+    string clientId = "medi-bridge";
+    string clientSecret = "YOUR_CLIENT_SECRET_HERE"; // Replace with actual secret from Sabith
+    string tokenEndpoint = "/auth/realms/your-realm/protocol/openid-connect/token"; // Adjust realm as per Keycloak setup
+
+    map<string> payload = {
+        "grant_type": "client_credentials",
+        "client_id": clientId,
+        "client_secret": clientSecret
+    };
+
+    http:Request request = new;
+    request.setPayload(payload);
+    request.addHeader("Content-Type", "application/x-www-form-urlencoded");
+
+    json response = check keycloakClient->post(tokenEndpoint, request, targetType = json);
+    string? accessToken = (check response.access_token).toString();
+    
+    if accessToken is () {
+        return error("Failed to retrieve access token from Keycloak");
+    }
+    
+    log:printInfo("Successfully fetched Keycloak access token");
+    return accessToken;
 }
