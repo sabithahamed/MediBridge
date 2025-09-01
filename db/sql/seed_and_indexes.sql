@@ -1,4 +1,4 @@
--- db/sql/seed_and_index.sql
+-- db/sql/seed_and_indexes.sql
 INSERT INTO patients (patient_id, dhp_id, name, dob, contact) VALUES
 ('p001', 'dhp001', 'Alice Wonder', '1990-05-15', '{"email": "alice@email.com"}'),
 ('p002', 'dhp002', 'Bob Builder', '1985-11-20', '{"email": "bob@email.com"}'),
