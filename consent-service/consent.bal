@@ -23,10 +23,10 @@ postgresql:Options options = {
 };
 
 final postgresql:Client dbClient = check new (
-    host = getEnvWithDefault("DB_HOST", "192.168.1.100"),
+    host = getEnvWithDefault("DB_HOST", "localhost"),
     port = getIntEnvWithDefault("DB_PORT", 5432),
-    username = getEnvWithDefault("DB_USER", "myuser"),
-    password = getEnvWithDefault("DB_PASSWORD", "mypassword"),
+    username = getEnvWithDefault("DB_USER", "postgres"),
+    password = getEnvWithDefault("DB_PASSWORD", "postgres"),
     database = getEnvWithDefault("DB_NAME", "mydb"),
     options = options
 );
