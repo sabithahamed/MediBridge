@@ -1,4 +1,4 @@
-FROM ballerina/ballerina:latest
+FROM --platform=linux/amd64 ballerina/ballerina:latest
 WORKDIR /app
-COPY consent.bal .
-CMD ["bal", "run", "consent.bal"]
+COPY . .
+CMD ["bal", "run", "consent_service"]
