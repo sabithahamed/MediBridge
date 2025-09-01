@@ -1,0 +1,12 @@
+[package]
+org = "code_mavericks"
+name = "consent_service"
+version = "0.1.0"
+
+[dependencies]
+"ballerinax/postgresql" = "2.1.0"
+
+[[platform.java11.dependency]]
+groupId = "org.postgresql"
+artifactId = "postgresql"
+version = "42.7.4"
